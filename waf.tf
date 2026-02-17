@@ -1,6 +1,6 @@
-locals {
-  scope_prefix = var.scope == "CLOUDFRONT" ? "cloudfront" : "regional"
-}
+#######################################
+# WAF Web ACL
+#######################################
 
 resource "aws_wafv2_web_acl" "acl" {
   name  = "${var.app_name}-waf-${local.scope_prefix}"
@@ -117,7 +117,10 @@ resource "aws_wafv2_web_acl" "acl" {
   tags = merge(var.tags, { "name" = "${var.app_name}-waf-${local.scope_prefix}" })
 }
 
-# Optional association (for REGIONAL scope resources like API Gateway)
+#######################################
+# Optional Resource Association
+#######################################
+
 resource "aws_wafv2_web_acl_association" "association" {
   count        = var.resource_arn != "" && var.scope == "REGIONAL" ? 1 : 0
   web_acl_arn  = aws_wafv2_web_acl.acl.arn
