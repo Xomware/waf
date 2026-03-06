@@ -10,79 +10,25 @@ resource "aws_wafv2_web_acl" "acl" {
     allow {}
   }
 
-  rule {
-    name     = "AWSManagedRulesAmazonIpReputationList-rule"
-    priority = 0
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesAmazonIpReputationList"
-        vendor_name = "AWS"
+  dynamic "rule" {
+    for_each = var.managed_rules
+    content {
+      name     = "${rule.value.name}-rule"
+      priority = rule.value.priority
+      override_action {
+        none {}
       }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.app_name}-${local.scope_prefix}-ip-reputation"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedRulesSQLiRuleSet-rule"
-    priority = 1
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesSQLiRuleSet"
-        vendor_name = "AWS"
+      statement {
+        managed_rule_group_statement {
+          name        = rule.value.name
+          vendor_name = rule.value.vendor_name
+        }
       }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.app_name}-${local.scope_prefix}-sqli-metrics"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedRulesKnownBadInputsRuleSet-rule"
-    priority = 2
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesKnownBadInputsRuleSet"
-        vendor_name = "AWS"
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.app_name}-${local.scope_prefix}-${lower(rule.value.name)}"
+        sampled_requests_enabled   = true
       }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.app_name}-${local.scope_prefix}-known-bad-inputs"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedRulesCommonRuleSet-rule"
-    priority = 3
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.app_name}-${local.scope_prefix}-common-rules"
-      sampled_requests_enabled   = true
     }
   }
 
@@ -90,7 +36,7 @@ resource "aws_wafv2_web_acl" "acl" {
     for_each = var.rate_limit > 0 ? [1] : []
     content {
       name     = "RateLimitRule"
-      priority = 4
+      priority = 100
       action {
         block {}
       }

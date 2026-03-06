@@ -30,3 +30,16 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "managed_rules" {
+  description = "List of AWS managed rule groups to enable. Defaults to IP Reputation + Common Rules."
+  type = list(object({
+    name        = string
+    vendor_name = optional(string, "AWS")
+    priority    = number
+  }))
+  default = [
+    { name = "AWSManagedRulesAmazonIpReputationList", priority = 0 },
+    { name = "AWSManagedRulesCommonRuleSet", priority = 1 }
+  ]
+}
